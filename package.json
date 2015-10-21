@@ -15,7 +15,11 @@
     "nedb": "^1.2.1",
     "wreck": "^6.3.0"
   },
-  "engines" : {
+  "engines": {
     "node": "^4.2.1"
+  },
+  "repository":{
+    "type" : "git",
+    "url" : "https://github.com/jeremiahlee/fitbit-hapi-demo.git"
   }
 }

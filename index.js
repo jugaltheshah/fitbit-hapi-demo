@@ -7,8 +7,8 @@ var Hapi = require('hapi'),
 // Create a server with a host and port
 var server = new Hapi.Server({ debug: { request: ['error'] } });
 server.connection({ 
-    host: 'localhost', 
-    port: process.env.PORT 
+    host: '0.0.0.0', 
+    port: parseInt(process.env.PORT, 10)
 });
 
 // Connect to database
