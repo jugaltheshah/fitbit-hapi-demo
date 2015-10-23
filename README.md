@@ -15,6 +15,14 @@ This example assumes you're using Node.js 4.2.x
 
 `npm install`
 
+## Fitbit Web API client settings at https://dev.fitbit.com/app
+
+Set your OAuth redirect URI to:
+<your server here>/signin
+
+Set your subscriber endpoint URI to:
+<your server here>/webhook-receiver
+
 # To run locally
 
 `FITBIT_OAUTH2_CLIENT_ID=todo_your_fitbit_client_id \
@@ -23,6 +31,9 @@ COOKIE_PASSWORD=todo_put_anything_here \
 PORT=8000 \
 CLOUD_DIR='./' \
 node index.js`
+
+To receive notifications locally, you'll need to use a tool like [ngrok](https://ngrok.com/).
+`~/Applications/ngrok http 8000`
     
 
 # To run on Modulus:
