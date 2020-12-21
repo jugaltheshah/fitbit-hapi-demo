@@ -5,15 +5,22 @@ const JWT = require('jwt-simple');
 const crypto = require('crypto');
 const Bell = require('@hapi/bell');
 
-// Create a server with a host and port
-const server = Hapi.server({ 
-    debug: { request: ['error'] },
-    host: '0.0.0.0',
-    port: parseInt(process.env.PORT, 10)
-});
+let server;
 
-await server.register(Bell);
+(async () => {
 
+    // Create a server with a host and port
+    server = Hapi.server({ 
+        debug: { request: ['error'] },
+        host: '0.0.0.0',
+        port: parseInt(process.env.PORT, 10)
+    });
+
+    await server.start();
+    await server.register(Bell);
+    console.log('Server running on %s', server.info.uri);
+})();
+  
 // Connect to databaseget
 const Datastore = require('nedb');
 const db = new Datastore({
