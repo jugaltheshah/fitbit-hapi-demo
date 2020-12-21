@@ -90,4 +90,4 @@ build/Release
 node_modules
 
 # Project specific
-nedb.json
+nedb.jsonRequests.http

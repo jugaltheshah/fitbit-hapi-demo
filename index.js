@@ -7,7 +7,7 @@ const Bell = require('@hapi/bell');
 
 let server;
 
-(async () => {
+(async function() {
 
     // Create a server with a host and port
     server = Hapi.server({ 
@@ -18,6 +18,7 @@ let server;
 
     await server.start();
     await server.register(Bell);
+
     console.log('Server running on %s', server.info.uri);
 })();
   
@@ -27,6 +28,8 @@ const db = new Datastore({
     filename: path.join(process.env.CLOUD_DIR, 'nedb.json'),
     autoload: true
 });
+
+console.log({ server });
 
 // Bell is a third-party authentication plugin for hapi.
 // Register Fitbit as an OAuth 2.0 authentication provider:
