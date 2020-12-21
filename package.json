@@ -9,17 +9,17 @@
   "author": "Jeremiah Lee",
   "license": "ISC",
   "dependencies": {
-    "bell": "^5.4.0",
-    "hapi": "^11.0.0",
-    "jwt-simple": "^0.3.1",
-    "nedb": "^1.2.1",
-    "wreck": "^6.3.0"
+    "@hapi/bell": "^12.1.1",
+    "@hapi/hapi": "^20.0.3",
+    "@hapi/wreck": "^17.1.0",
+    "jwt-simple": "^0.5.6",
+    "nedb": "^1.2.1"
   },
   "engines": {
     "node": "^4.2.1"
   },
-  "repository":{
-    "type" : "git",
-    "url" : "https://github.com/jeremiahlee/fitbit-hapi-demo.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeremiahlee/fitbit-hapi-demo.git"
   }
 }
