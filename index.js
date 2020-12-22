@@ -1,51 +1,63 @@
-var Hapi = require('hapi'),
-    Wreck = require('wreck'),
-    path = require('path'),
-    JWT = require('jwt-simple'),
-    crypto = require('crypto');
+const Hapi = require('@hapi/hapi');
+const Wreck = require('@hapi/wreck');
+const path = require('path');
+const JWT = require('jwt-simple');
+const crypto = require('crypto');
+const Bell = require('@hapi/bell');
 
-// Create a server with a host and port
-var server = new Hapi.Server({ debug: { request: ['error'] } });
-server.connection({ 
-    host: '0.0.0.0', 
-    port: parseInt(process.env.PORT, 10)
-});
+let server;
 
-// Connect to database
-var Datastore = require('nedb');
-var db = new Datastore({
+(async function() {
+
+    // Create a server with a host and port
+    server = Hapi.server({ 
+        debug: { request: ['error'] },
+        host: '0.0.0.0',
+        port: parseInt(process.env.PORT, 10)
+    });
+
+    await server.start();
+    await server.register(Bell);
+
+    console.log('Server running on %s', server.info.uri);
+})();
+  
+// Connect to databaseget
+const Datastore = require('nedb');
+const db = new Datastore({
     filename: path.join(process.env.CLOUD_DIR, 'nedb.json'),
     autoload: true
 });
 
+console.log({ server });
+
 // Bell is a third-party authentication plugin for hapi.
 // Register Fitbit as an OAuth 2.0 authentication provider:
-server.register(require('bell'), function(err) {
-    server.auth.strategy('fitbit', 'bell', {
-        provider: {
-            protocol: 'oauth2',
-            useParamsAuth: false,
-            auth: 'https://www.fitbit.com/oauth2/authorize',
-            token: 'https://api.fitbit.com/oauth2/token',
-            scope: ['profile', 'activity', 'heartrate', 'location'],
-            profile: function(credentials, params, get, callback) {
-                get('https://api.fitbit.com/1/user/-/profile.json', null, function(profile) {
-                    credentials.profile = {
-                        id: profile.user.encodedId,
-                        displayName: profile.user.displayName,
-                        name: profile.user.fullName
-                    };
+server.auth.strategy('fitbit', 'bell', {
+    provider: {
+        protocol: 'oauth2',
+        useParamsAuth: false,
+        auth: 'https://www.fitbit.com/oauth2/authorize',
+        token: 'https://api.fitbit.com/oauth2/token',
+        scope: ['profile', 'activity', 'heartrate', 'location'],
+        profile: function(credentials, params, get, callback) {
+            console.log({ credentials });
+            get('https://api.fitbit.com/1/user/-/profile.json', null, function(profile) {
+                credentials.profile = {
+                    id: profile.user.encodedId,
+                    displayName: profile.user.displayName,
+                    name: profile.user.fullName
+                };
 
-                    return callback();
-                });
-            }
-        },
-        password: process.env.COOKIE_PASSWORD,
-        clientId: process.env.FITBIT_OAUTH2_CLIENT_ID,
-        clientSecret: process.env.FITBIT_OAUTH2_CLIENT_SECRET,
-        cookie: 'bell-fitbit',
-        isSecure: false // Remove if server is HTTPS, which it should be if using beyond a demo.
-    });
+                return callback();
+            });
+        }
+    },
+    password: process.env.COOKIE_PASSWORD,
+    clientId: process.env.FITBIT_OAUTH2_CLIENT_ID,
+    clientSecret: process.env.FITBIT_OAUTH2_CLIENT_SECRET,
+    cookie: 'bell-fitbit',
+    isSecure: false // Remove if server is HTTPS, which it should be if using beyond a demo.
 });
 
 // Page to start the OAuth 2.0 Authorization Code Grant Flow
@@ -53,7 +65,8 @@ server.route({
     method: 'GET',
     path:'/',
     handler: function (request, reply) {
-        return reply('Go <a href="./signin">here</a> to sign in.');
+        // return reply('Go <a href="./signin">here</a> to sign in.');
+        return reply('Test');
     }
 });
 
@@ -61,8 +74,12 @@ server.route({
     method: 'GET',
     path:'/signin',
     config: {
-        auth: 'fitbit',
+        auth: {
+            mode: 'try',
+            strategy: 'fitbit'
+        },
         handler: function (request, reply) {
+            console.log('Inside /signin route');
             if (!request.auth.isAuthenticated) {
                 return reply('Authentication failed due to: ' + request.auth.error.message);
             }
@@ -72,7 +89,7 @@ server.route({
             
             // Save the credentials to database
             db.update(
-                {_id: request.auth.credentials.profile.id}, // query
+                { _id: request.auth.credentials.profile.id }, // query
                 request.auth.credentials, // update
                 {upsert: true}, // options
                 function(err, numReplaced, newDoc) {
@@ -127,7 +144,7 @@ server.route({
         
         // Verify request is actually from Fitbit
         // https://dev.fitbit.com/docs/subscriptions/#security
-        var requestHash = crypto.createHmac('sha1', process.env.FITBIT_OAUTH2_CLIENT_SECRET+'&').update(request.payload.toString()).digest('base64');
+        const requestHash = crypto.createHmac('sha1', process.env.FITBIT_OAUTH2_CLIENT_SECRET+'&').update(request.payload.toString()).digest('base64');
         
         if (requestHash !== request.headers['x-fitbit-signature']) {
             return console.error('Invalid subscription notification received.');
@@ -175,7 +192,7 @@ function getAccessTokenByUserId(userId, cb) {
         }
 
         // Check to see if the token has expired
-        var decodedToken = JWT.decode(doc.token, null, true);
+        const decodedToken = JWT.decode(doc.token, null, true);
 
         if (Date.now()/1000 > decodedToken.exp) {
             // Token expired, so refresh it.

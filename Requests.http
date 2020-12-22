@@ -1,0 +1,23 @@
+@token=eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIyMkJZRlgiLCJzdWIiOiIyQzY2NTQiLCJpc3MiOiJGaXRiaXQiLCJ0eXAiOiJhY2Nlc3NfdG9rZW4iLCJzY29wZXMiOiJ3aHIgd3BybyB3c2V0IHdhY3Qgd2xvYyIsImV4cCI6MTYwODU2NTAzOCwiaWF0IjoxNjA4NTM2MjM4fQ.YG8bdn7-Y1XDEf4wU2GKJTClZmVsOrRcJ0Nw8iu_ZJQ
+@userId=2C6654
+@trackerId=1631322685
+
+### GET Devices
+GET https://api.fitbit.com/1/user/-/devices.json
+Authorization: Bearer {{token}}
+
+### GET Alarms
+GET https://api.fitbit.com/1/user/{{userId}}/devices/tracker/{{trackerId}}/alarms.json
+Authorization: Bearer {{token}}
+
+### SET Alarm
+POST https://api.fitbit.com/1/user/{{userId}}/devices/tracker/{{trackerId}}/alarms.json
+Content-Type: application/application/x-www-form-urlencoded
+Authorization: Bearer {{token}}
+
+{
+    "time": "14:00-08:00",
+    "enabled": true,
+    "recurring": false,
+    "weekDays": "MONDAY"
+}
