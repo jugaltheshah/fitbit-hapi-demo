@@ -41,6 +41,7 @@ server.auth.strategy('fitbit', 'bell', {
         token: 'https://api.fitbit.com/oauth2/token',
         scope: ['profile', 'activity', 'heartrate', 'location'],
         profile: function(credentials, params, get, callback) {
+            console.log({ credentials });
             get('https://api.fitbit.com/1/user/-/profile.json', null, function(profile) {
                 credentials.profile = {
                     id: profile.user.encodedId,

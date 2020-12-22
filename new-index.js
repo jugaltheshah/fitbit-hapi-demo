@@ -4,11 +4,12 @@ const Bell = require('@hapi/bell');
 const Hapi = require('@hapi/hapi');
 const Routes = require('./routes');
 const Path = require('path');
+const Loki = require('lokijs');
 
 // Connect to databaseget
-const Datastore = require('nedb');
-const db = new Datastore({
-    filename: Path.join(process.env.CLOUD_DIR, 'nedb.json'),
+const db = new Loki(Path.join(process.env.CLOUD_DIR, 'loki.db'), {
+    verbose: true,
+    autosave: true, 
     autoload: true
 });
 
@@ -17,6 +18,7 @@ const internals = {};
 internals.start = async function () {
 
     const server = Hapi.server({ port: process.env.PORT || 3000 });
+    server.app.db = db;
 
     // Register bell with the server
 
@@ -33,19 +35,18 @@ internals.start = async function () {
             auth: 'https://www.fitbit.com/oauth2/authorize',
             token: 'https://api.fitbit.com/oauth2/token',
             scope: ['profile', 'activity', 'heartrate', 'location', 'settings'],
-            profile: function(credentials, params, get, callback) {
-                get('https://api.fitbit.com/1/user/-/profile.json', null, function(profile) {
-                    credentials.profile = {
-                        id: profile.user.encodedId,
-                        displayName: profile.user.displayName,
-                        name: profile.user.fullName
-                    };
-    
-                    return callback();
-                });
+            profile: async function(credentials, params, get, callback) {
+
+                const profile = await get('https://api.fitbit.com/1/user/-/profile.json');
+
+                credentials.profile = {
+                    id: profile.user.encodedId,
+                    displayName: profile.user.displayName,
+                    name: profile.user.fullName
+                };
             }
         },
-        password: process.env.COOKIE_PASSWORD,
+        password: 'L@BHS4#w9j&N2EAQ2B7^dT4po34rn*GX' || process.env.COOKIE_PASSWORD,
         clientId: process.env.FITBIT_OAUTH2_CLIENT_ID,
         clientSecret: process.env.FITBIT_OAUTH2_CLIENT_SECRET,
         cookie: 'bell-fitbit',

@@ -1,3 +1,12 @@
+'use strict';
+
+const Wreck = require('@hapi/wreck');
+
+
+const internals = {
+    tokensColl: null
+};
+
 // Fitbit Web API OAuth 2.0 access tokens expire frequently and must be refreshed
 function getAccessTokenByUserId(userId, cb) {
     db.findOne({_id: userId}, function(err, doc) {
@@ -117,44 +126,34 @@ module.exports = [
                 strategy: 'fitbit'
             },
             handler: function (request, h) {
-                console.log('Inside /signin route');
+
+                const db = request.server.app.db;
+                let tokensColl = internals.tokensColl
+                
+                if (!tokensColl) {
+                    tokensColl = db.addCollection('tokens');
+                    internals.tokensColl = tokensColl;
+                }
+                
                 if (!request.auth.isAuthenticated) {
                     return h.response('Authentication failed due to: ' + request.auth.error.message);
                 }
                 
-                console.log({ creds: request.auth.credentials });
                 // Set the key for this database record to the user's id
-                request.auth.credentials._id = request.auth.credentials.profile.id;
+                const profileId = request.auth.credentials.profile.id;
+                request.auth.credentials._id = profileId;
                 
                 // Save the credentials to database
-                db.update(
-                    { _id: request.auth.credentials.profile.id }, // query
-                    request.auth.credentials, // update
-                    {upsert: true}, // options
-                    function(err, numReplaced, newDoc) {
-                        if (err) {
-                            return h.response(err).code(500);
-                        }
-    
-                        // Subscribe to Activity Data
-                        Wreck.post('https://api.fitbit.com/1/user/-/activities/apiSubscriptions/' + request.auth.credentials.profile.id + '.json',
-                            {
-                                headers: {
-                                    Authorization: 'Bearer ' + request.auth.credentials.token
-                                },
-                                json: true
-                            },
-                            function(err, response, payload) {
-                                if (err) {
-                                    return h.response(err).code(500);
-                                }
-    
-                                // Finally respond to the request
-                                return h.response('Signed in as ' + request.auth.credentials.profile.displayName);
-                            }
-                        );
-                    }
-                );
+                tokensColl.insert({
+                    _id: profileId,
+                    token: request.auth.credentials.token,
+                    refreshToken: request.auth.credentials.refreshToken,
+                    expiresIn: request.auth.credentials.expiresIn,
+                    profile: request.auth.credentials.profile
+                })
+
+                // return h.response('Signed in as ' + request.auth.credentials.profile.displayName);
+                return h.response(tokensColl);
             }
         }
     },
